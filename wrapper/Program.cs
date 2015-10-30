@@ -3,17 +3,17 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Configuration;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Text;
     using System.Text.RegularExpressions;
 
     public static class Program
     {
         public static void Main(string[] args)
         {
-            var executable = Properties.Settings.Default.executable;
+            var executable = ConfigurationManager.AppSettings["executable"];
             string newArgs = null;
             if (!string.IsNullOrWhiteSpace(executable))
             {
@@ -39,9 +39,11 @@
 
 
                 Regex outputLineRegex = null;
-                if (!string.IsNullOrWhiteSpace(Properties.Settings.Default.outputLinePattern) && Properties.Settings.Default.outputLineReplacement != null)
+                var outputLinePattern = ConfigurationManager.AppSettings["outputLinePattern"];
+                var outputLineReplacement = ConfigurationManager.AppSettings["outputLineReplacement "];
+                if (!string.IsNullOrWhiteSpace(outputLinePattern) && outputLineReplacement != null)
                 {
-                    outputLineRegex = new Regex(Properties.Settings.Default.outputLinePattern, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
+                    outputLineRegex = new Regex(outputLinePattern, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
                 }
 
                 process.Start();
@@ -53,7 +55,7 @@
                     {
                         if (outputLineRegex != null && outputLineRegex.IsMatch(line))
                         {
-                            var replecedLine = outputLineRegex.Replace(line, Properties.Settings.Default.outputLineReplacement);
+                            var replecedLine = outputLineRegex.Replace(line, outputLineReplacement);
                             Console.WriteLine(replecedLine);
                             outputTrace.Add("!!! Replaced line !!!");
                             outputTrace.Add(line);
@@ -73,7 +75,7 @@
             }
             
             int overridedExitCode;
-            if (int.TryParse(Properties.Settings.Default.overridedExitCode, out overridedExitCode))
+            if (int.TryParse(ConfigurationManager.AppSettings["overridedExitCode"], out overridedExitCode))
             {
                 if (processExitCode != null)
                 {
@@ -84,7 +86,7 @@
             }
 
             var exitCode = (processExitCode ?? 0);
-            var traceCommandLineFile = GetTraceFile(Properties.Settings.Default.traceCommandLineFile);
+            var traceCommandLineFile = GetTraceFile(ConfigurationManager.AppSettings["traceCommandLineFile"]);
             if (!string.IsNullOrWhiteSpace(traceCommandLineFile))
             {
                 using (var traceCommandLine = File.CreateText(traceCommandLineFile))
@@ -109,11 +111,11 @@
                     traceCommandLine.WriteLine("@popd");
 
                     traceCommandLine.WriteLine();
-                    traceCommandLine.WriteLine($"@REM Configuration.executable: {Properties.Settings.Default.executable}");
-                    traceCommandLine.WriteLine($"@REM Configuration.overridedExitCode: {Properties.Settings.Default.overridedExitCode}");
-                    traceCommandLine.WriteLine($"@REM Configuration.traceCommandLineFile: {Properties.Settings.Default.traceCommandLineFile}");
-                    traceCommandLine.WriteLine($"@REM Configuration.outputLinePattern: {Properties.Settings.Default.outputLinePattern}");
-                    traceCommandLine.WriteLine($"@REM Configuration.outputLineReplacement: {Properties.Settings.Default.outputLineReplacement}");
+                    traceCommandLine.WriteLine($"@REM Configuration.executable: {ConfigurationManager.AppSettings["executable"]}");
+                    traceCommandLine.WriteLine($"@REM Configuration.overridedExitCode: {ConfigurationManager.AppSettings["overridedExitCode"]}");
+                    traceCommandLine.WriteLine($"@REM Configuration.traceCommandLineFile: {ConfigurationManager.AppSettings["traceCommandLineFile"]}");
+                    traceCommandLine.WriteLine($"@REM Configuration.outputLinePattern: {ConfigurationManager.AppSettings["outputLinePattern"]}");
+                    traceCommandLine.WriteLine($"@REM Configuration.outputLineReplacement: {ConfigurationManager.AppSettings["outputLineReplacement"]}");
                     traceCommandLine.WriteLine($"@REM Is64BitProcess: {Environment.Is64BitProcess}");
                     traceCommandLine.WriteLine($"@REM Is64BitOperatingSystem: {Environment.Is64BitOperatingSystem}");
                     traceCommandLine.WriteLine($"@REM OSVersion: {Environment.OSVersion}");
