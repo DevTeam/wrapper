@@ -18,29 +18,23 @@
             if (!string.IsNullOrWhiteSpace(executable))
             {
                 newArgs = string.Join(" ", args);
-            }                       
-            
+            }
+
             var outputTrace = new List<string>();
             var infoTrace = new List<string>();
 
             int? processExitCode = null;
             if (newArgs != null)
             {
-                var process = new Process
-                {
-                    StartInfo =
-                    {
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        FileName = executable,
-                        Arguments = newArgs
-                    }
-                };
-
+                var process = new Process();
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.FileName = executable;
+                process.StartInfo.Arguments = newArgs;
 
                 Regex outputLineRegex = null;
                 var outputLinePattern = ConfigurationManager.AppSettings["outputLinePattern"];
-                var outputLineReplacement = ConfigurationManager.AppSettings["outputLineReplacement "];
+                var outputLineReplacement = ConfigurationManager.AppSettings["outputLineReplacement"];
                 if (!string.IsNullOrWhiteSpace(outputLinePattern) && outputLineReplacement != null)
                 {
                     outputLineRegex = new Regex(outputLinePattern, RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
@@ -71,15 +65,15 @@
                 }
                 while (line != null);
                 process.WaitForExit();
-                processExitCode = process.ExitCode;                
+                processExitCode = process.ExitCode;
             }
-            
+
             int overridedExitCode;
             if (int.TryParse(ConfigurationManager.AppSettings["overridedExitCode"], out overridedExitCode))
             {
                 if (processExitCode != null)
                 {
-                    infoTrace.Add($"!!! Override exit code {processExitCode} by {overridedExitCode}!!!");                    
+                    infoTrace.Add($"!!! Override exit code {processExitCode} by {overridedExitCode}!!!");
                 }
 
                 processExitCode = overridedExitCode;
@@ -157,12 +151,13 @@
 
             var fileRegex = new Regex($"(\\d+)\\.{fileName}", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
             var numVal = 0;
-            var filesNums = (from file in Directory.GetFiles(dirName)
-             let curFileName = Path.GetFileName(file)
-             let match = fileRegex.Match(curFileName)
-             where match.Success && match.Groups.Count == 2 && int.TryParse(match.Groups[1].Value, out numVal)
-             let num = numVal
-             select numVal).ToArray();
+            var filesNums = (
+                from file in Directory.GetFiles(dirName)
+                let curFileName = Path.GetFileName(file)
+                let match = fileRegex.Match(curFileName)
+                where match.Success && match.Groups.Count == 2 && int.TryParse(match.Groups[1].Value, out numVal)
+                let num = numVal
+                select numVal).ToArray();
 
             int nextNum = 0;
             if (filesNums.Any())
